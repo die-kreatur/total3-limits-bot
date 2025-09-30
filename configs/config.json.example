@@ -1,0 +1,4 @@
+{
+    "telegram_token": "my-awesome-bot-token",
+    "redis_url": "redis://redis:6379"
+}
