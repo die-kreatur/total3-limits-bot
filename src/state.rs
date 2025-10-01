@@ -51,9 +51,12 @@ fn trim_order_book(
             OrderType::Ask => entry.price <= border_price,
             OrderType::Bid => entry.price >= border_price,
         })
-        .map(|mut entity| {
-            entity.price = entity.price.trunc_with_scale(4).normalize();
-            entity
+        .map(|entity| {
+            let price = entity.price.trunc_with_scale(5).normalize();
+            OrderBookEntity {
+                price,
+                qty: entity.qty * price
+            }
         })
         .collect()
 }
