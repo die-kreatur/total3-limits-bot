@@ -45,7 +45,7 @@ pub fn format_message(book: ExtendedOrderBook) -> String {
     
     let asks = format_order_book(&mut f, book.asks);
     let bids = format_order_book(&mut f, book.bids);
-    let last_price = format_num(&mut f, book.last_price);
+    let last_price = book.last_price.trunc_with_scale(5).normalize();
 
     let msg = format!(
         "*{}*\n\nTop 10 limits of {}% depth\n\n*ASKS*\n{}\n\n*Last price* {}\n\n*BIDS*\n{}",
