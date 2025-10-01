@@ -53,9 +53,11 @@ impl Redis {
 mod test {
     use super::*;
 
+    #[ignore]
     #[tokio::test]
     async fn test_add_and_get_order_book() {
-        let redis = Redis::new("redis://redis:6379".to_string()).unwrap();
+        // docker compose up -d redis-test
+        let redis = Redis::new("redis://localhost:6379".to_string()).unwrap();
 
         let order_book = OrderBook::default();
         let result = redis.add_order_book("SOLUSDT", &order_book).await;

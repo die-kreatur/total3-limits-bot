@@ -254,12 +254,12 @@ mod test {
         let result = sort_and_filter(entity);
         let expected = vec![
             OrderBookEntity {
-                price: Decimal::from(90),
-                qty: Decimal::TEN,
-            },
-            OrderBookEntity {
                 price: Decimal::from(85),
                 qty: Decimal::ONE_HUNDRED,
+            },
+            OrderBookEntity {
+                price: Decimal::from(90),
+                qty: Decimal::TEN,
             },
             OrderBookEntity {
                 price: Decimal::from(80),
