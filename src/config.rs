@@ -1,6 +1,7 @@
 use std::fs;
 
 use serde::Deserialize;
+use teloxide::types::ChatId;
 
 use crate::error::{ServiceError, Result};
 
@@ -9,7 +10,8 @@ const CONFIG_PATH: &str = "./configs/config.json";
 #[derive(Debug, Deserialize)]
 pub struct ServiceConfig {
     pub redis_url: String,
-    pub telegram_token: String
+    pub telegram_token: String,
+    pub allowed_users: Vec<ChatId>
 }
 
 impl ServiceConfig {

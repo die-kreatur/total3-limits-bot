@@ -60,6 +60,7 @@ impl<T> BinanceResponse<T> {
 
 #[derive(Debug, Deserialize)]
 pub struct BinancePriceResponse {
+    #[allow(unused)]
     pub symbol: String,
     pub price: Decimal,
 }

@@ -6,6 +6,7 @@ pub type Result<T> = std::result::Result<T, ServiceError>;
 pub enum ServiceError {
     SymbolNotFound(String),
     UnsupportedSymbol(String),
+    Unauthorized,
     Internal(String),
 }
 
@@ -27,6 +28,7 @@ impl Display for ServiceError {
             ServiceError::Internal(msg) => msg,
             ServiceError::SymbolNotFound(symbol) => &format!("{} not found", symbol),
             ServiceError::UnsupportedSymbol(symbol) => &format!("{} not supported", symbol),
+            ServiceError::Unauthorized => &format!("Action not allowed"),
         };
 
         write!(f, "{}", val)

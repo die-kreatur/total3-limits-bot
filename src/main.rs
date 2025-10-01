@@ -67,13 +67,12 @@ async fn main() {
     let config = ServiceConfig::read_from_file().expect("Failed to read config");
 
     let bot = Bot::new(config.telegram_token);
-    let app_state = Arc::new(AppState::new(config.redis_url));
+    let app_state = Arc::new(AppState::new(config.redis_url, config.allowed_users));
 
     let exch_info_update_handler = tokio::spawn(periodic_exchange_info_update(app_state.clone()));
 
     let dispatcher_handler = tokio::spawn(async move {
         Dispatcher::builder(bot, schema())
-            .enable_ctrlc_handler()
             .dependencies(dptree::deps![
                 InMemStorage::<State>::new(),
                 app_state.clone()
@@ -88,23 +87,38 @@ async fn main() {
     }
 }
 
-async fn start(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    bot.send_message(msg.chat.id, "Enter Binance spot token")
-        .await?;
-    dialogue.update(State::ReceiveToken).await?;
+async fn start(bot: Bot, dialogue: MyDialogue, msg: Message, app_state: Arc<AppState>) -> HandlerResult {
+    match app_state.authorize(msg.chat.id).await {
+        Ok(_) => {
+            bot.send_message(msg.chat.id, "Enter Binance spot token").await?;
+            dialogue.update(State::ReceiveToken).await?
+        },
+        Err(e) => {
+            bot.send_message(msg.chat.id, e.to_string()).await?;
+            dialogue.exit().await?
+        }
+    }
 
     Ok(())
 }
 
-async fn help(bot: Bot, msg: Message) -> HandlerResult {
-    bot.send_message(msg.chat.id, Command::descriptions().to_string())
-        .await?;
+async fn help(bot: Bot, msg: Message, app_state: Arc<AppState>) -> HandlerResult {
+    let message = match app_state.authorize(msg.chat.id).await {
+        Ok(_) => Command::descriptions().to_string(),
+        Err(e) => e.to_string(),
+    };
+
+    bot.send_message(msg.chat.id, message).await?;
     Ok(())
 }
 
-async fn cancel(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    bot.send_message(msg.chat.id, "Cancelled. Enter /start to check order book")
-        .await?;
+async fn cancel(bot: Bot, dialogue: MyDialogue, msg: Message, app_state: Arc<AppState>) -> HandlerResult {
+    let message = match app_state.authorize(msg.chat.id).await {
+        Ok(_) => "Cancelled. Enter /start to check order book",
+        Err(e) => &e.to_string(),
+    };
+
+    bot.send_message(msg.chat.id, message).await?;
     dialogue.exit().await?;
     Ok(())
 }

@@ -5,6 +5,7 @@ use std::time::Duration;
 use log::{error, info};
 use reqwest::Client;
 use rust_decimal::Decimal;
+use teloxide::types::ChatId;
 use tokio::sync::RwLock;
 use tokio::time::interval;
 
@@ -78,16 +79,18 @@ pub struct AppState {
     binance: Binance,
     trading_pairs: RwLock<HashSet<String>>,
     redis: Redis,
+    allowed_users: Vec<ChatId>,
 }
 
 impl AppState {
-    pub fn new(redis_config: String) -> Self {
+    pub fn new(redis_config: String, allowed_users: Vec<ChatId>) -> Self {
         let redis = Redis::new(redis_config).expect("Failed to connect to Redis");
 
         AppState {
             binance: Binance::new(Client::new()),
             trading_pairs: RwLock::new(HashSet::new()),
             redis,
+            allowed_users,
         }
     }
 
@@ -160,6 +163,14 @@ impl AppState {
             None => Err(ServiceError::SymbolNotFound(symbol)),
             Some(item) => Ok(item.to_owned()),
         }
+    }
+
+    pub async fn authorize(&self, chat_id: ChatId) -> Result<()> {
+        if !self.allowed_users.contains(&chat_id) {
+            return Err(ServiceError::Unauthorized)
+        }
+
+        Ok(())
     }
 }
 

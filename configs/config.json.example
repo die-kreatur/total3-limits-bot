@@ -1,4 +1,5 @@
 {
     "telegram_token": "my-awesome-bot-token",
-    "redis_url": "redis://redis:6379"
+    "redis_url": "redis://redis:6379",
+    "allowed_users": [12345, 98765]
 }

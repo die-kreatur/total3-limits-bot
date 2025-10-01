@@ -38,12 +38,6 @@ fn format_order_book(mut f: &mut Formatter, book: Vec<OrderBookEntity>) -> Strin
 
     book.sort_by(|book1, book2| book2.cmp(&book1));
     book.join("\n")
-    
-    // book
-    //     .into_iter()
-    //     .map(|item| format!("• {}   {}", format_num(&mut f, item.price), format_num(&mut f, item.qty)))
-    //     .collect::<Vec<_>>()
-    //     .join("\n")
 }
 
 pub fn format_message(book: ExtendedOrderBook) -> String {
