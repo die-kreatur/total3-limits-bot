@@ -30,6 +30,16 @@ pub struct ExtendedOrderBook {
     pub depth: Decimal,
 }
 
+impl ExtendedOrderBook {
+    pub fn asks_volume(&self) -> Decimal {
+        self.asks.iter().map(|item| item.qty).sum()
+    }
+
+    pub fn bids_volume(&self) -> Decimal {
+        self.bids.iter().map(|item| item.qty).sum()
+    }
+}
+
 fn find_border_price(last_price: Decimal, depth: Decimal, order_type: OrderType) -> Decimal {
     let depth = depth / Decimal::ONE_HUNDRED;
 

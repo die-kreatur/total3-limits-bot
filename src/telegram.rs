@@ -42,14 +42,16 @@ fn format_order_book(mut f: &mut Formatter, book: Vec<OrderBookEntity>) -> Strin
 
 pub fn format_message(book: ExtendedOrderBook) -> String {
     let mut f = Formatter::default();
+    let asks_vol = format_num(&mut f, book.asks_volume());
+    let bids_vol = format_num(&mut f, book.bids_volume());
     
     let asks = format_order_book(&mut f, book.asks);
     let bids = format_order_book(&mut f, book.bids);
     let last_price = book.last_price.trunc_with_scale(5).normalize();
 
     let msg = format!(
-        "*{}*\n\nTop 10 limits of {}% depth\n\n*ASKS*\n{}\n\n*Last price* {}\n\n*BIDS*\n{}",
-        book.symbol, book.depth, asks, last_price, bids
+        "*{}*\n\nTop 10 limits of {}% depth\n\n*ASKS*\n{}\n\n*Last price* {}\n\n*BIDS*\n{}\n\nAsks volume ${}\nBids volume ${}",
+        book.symbol, book.depth, asks, last_price, bids, asks_vol, bids_vol
     );
 
     escape_markdown_v2(msg)
