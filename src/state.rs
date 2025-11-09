@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::sync::{Arc, LazyLock};
+use std::sync::Arc;
 use std::time::Duration;
 
 use log::{error, info};
@@ -13,7 +13,7 @@ use crate::binance::{Binance, OrderBook, OrderBookEntity};
 use crate::error::{Result, ServiceError};
 use crate::redis::Redis;
 
-const DEPTH_EXEPCTIONS: LazyLock<&[&str]> = LazyLock::new(|| &["BTCUSDT", "ETHUSDT", "WBTCUSDT", "WETHUSDT"]);
+const DEPTH_EXEPCTIONS: [&str; 4] = ["BTCUSDT", "ETHUSDT", "WBTCUSDT", "WETHUSDT"];
 const TOP_LIMITS: usize = 10;
 
 #[derive(Debug, Clone, Copy)]
