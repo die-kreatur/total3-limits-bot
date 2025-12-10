@@ -1,6 +1,7 @@
 mod binance;
 mod config;
 mod error;
+mod order_book;
 mod redis;
 mod state;
 mod telegram;
@@ -157,9 +158,7 @@ async fn receive_token(
                 dialogue.update(State::ReceiveToken).await?
             }
         },
-        None => {
-            bot.send_message(msg.chat.id, "Send me plain text.").await?;
-        }
+        None => {}
     }
 
     Ok(())
@@ -197,10 +196,7 @@ async fn perform(
 
             dialogue.update(State::ReceiveToken).await.unwrap()
         }
-        _ => {
-            bot.send_message(query.chat_id().unwrap(), "Send me plain text.")
-                .await?;
-        }
+        _ => {}
     }
 
     Ok(())

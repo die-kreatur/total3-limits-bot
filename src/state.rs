@@ -9,94 +9,22 @@ use teloxide::types::ChatId;
 use tokio::sync::RwLock;
 use tokio::time::interval;
 
-use crate::binance::{Binance, OrderBook, OrderBookEntity};
+use crate::binance::Binance;
 use crate::error::{Result, ServiceError};
+use crate::order_book::{ExtendedOrderBook, OrderBook, OrderType, process_order_book_entity};
 use crate::redis::Redis;
 
 const DEPTH_EXEPCTIONS: [&str; 4] = ["BTCUSDT", "ETHUSDT", "WBTCUSDT", "WETHUSDT"];
-const TOP_LIMITS: usize = 10;
-
-#[derive(Debug, Clone, Copy)]
-enum OrderType {
-    Ask,
-    Bid,
-}
-
-pub struct ExtendedOrderBook {
-    pub symbol: String,
-    pub asks: Vec<OrderBookEntity>,
-    pub bids: Vec<OrderBookEntity>,
-    pub last_price: Decimal,
-    pub depth: Decimal,
-}
-
-impl ExtendedOrderBook {
-    pub fn asks_volume(&self) -> Decimal {
-        self.asks.iter().map(|item| item.qty).sum()
-    }
-
-    pub fn bids_volume(&self) -> Decimal {
-        self.bids.iter().map(|item| item.qty).sum()
-    }
-}
-
-fn find_border_price(last_price: Decimal, depth: Decimal, order_type: OrderType) -> Decimal {
-    let depth = depth / Decimal::ONE_HUNDRED;
-
-    let percentage = match order_type {
-        OrderType::Ask => Decimal::ONE + depth,
-        OrderType::Bid => Decimal::ONE - depth,
-    };
-
-    last_price * percentage
-}
-
-fn trim_order_book(
-    book: Vec<OrderBookEntity>,
-    border_price: Decimal,
-    order_type: OrderType,
-) -> Vec<OrderBookEntity> {
-    book.into_iter()
-        .filter(|entry| match order_type {
-            OrderType::Ask => entry.price <= border_price,
-            OrderType::Bid => entry.price >= border_price,
-        })
-        .map(|entity| {
-            let price = entity.price.trunc_with_scale(5).normalize();
-            OrderBookEntity {
-                price,
-                qty: entity.qty * price
-            }
-        })
-        .collect()
-}
-
-fn sort_and_filter(mut book: Vec<OrderBookEntity>) -> Vec<OrderBookEntity> {
-    // sorting by quantity from the biggest one to the smallest one
-    book.sort_by(|book1, book2| book2.qty.cmp(&book1.qty));
-    book.into_iter().take(TOP_LIMITS).collect()
-}
-
-fn process_order_book(
-    book: Vec<OrderBookEntity>,
-    last_price: Decimal,
-    depth: Decimal,
-    order_type: OrderType,
-) -> Vec<OrderBookEntity> {
-    let border_price = find_border_price(last_price, depth, order_type);
-    let entities = trim_order_book(book, border_price, order_type);
-    sort_and_filter(entities)
-}
 
 pub struct AppState {
     binance: Binance,
     trading_pairs: RwLock<HashSet<String>>,
     redis: Redis,
-    allowed_users: Vec<ChatId>,
+    allowed_users: HashSet<ChatId>,
 }
 
 impl AppState {
-    pub fn new(redis_config: String, allowed_users: Vec<ChatId>) -> Self {
+    pub fn new(redis_config: String, allowed_users: HashSet<ChatId>) -> Self {
         let redis = Redis::new(redis_config).expect("Failed to connect to Redis");
 
         AppState {
@@ -145,8 +73,8 @@ impl AppState {
         let last_price = self.binance.get_last_price(&symbol).await?;
         let order_book = self.get_order_book(&symbol).await?;
 
-        let asks = process_order_book(order_book.asks, last_price.price, depth, OrderType::Ask);
-        let bids = process_order_book(order_book.bids, last_price.price, depth, OrderType::Bid);
+        let asks = process_order_book_entity(order_book.asks, last_price.price, depth, OrderType::Ask);
+        let bids = process_order_book_entity(order_book.bids, last_price.price, depth, OrderType::Bid);
 
         Ok(ExtendedOrderBook {
             symbol,
@@ -201,89 +129,5 @@ pub async fn periodic_exchange_info_update(state: Arc<AppState>) {
                 lock.extend(data);
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_find_border_price() {
-        let last_price = Decimal::from(200);
-        let depth = Decimal::TEN;
-
-        let result = find_border_price(last_price, depth, OrderType::Ask);
-        let expected = Decimal::from(220);
-        assert_eq!(result, expected);
-
-        let result = find_border_price(last_price, depth, OrderType::Bid);
-        let expected = Decimal::from(180);
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_trim_order_book() {
-        let bids = OrderBook::bids();
-        let asks = OrderBook::asks();
-
-        let result = trim_order_book(bids, Decimal::from(83), OrderType::Bid);
-        let expected = vec![
-            OrderBookEntity {
-                price: Decimal::from(90),
-                qty: Decimal::TEN,
-            },
-            OrderBookEntity {
-                price: Decimal::from(85),
-                qty: Decimal::ONE_HUNDRED,
-            },
-        ];
-
-        assert_eq!(result, expected);
-
-        let result = trim_order_book(asks, Decimal::from(200), OrderType::Ask);
-        let expected = vec![
-            OrderBookEntity {
-                price: Decimal::ONE_HUNDRED,
-                qty: Decimal::ONE,
-            },
-            OrderBookEntity {
-                price: Decimal::from(150),
-                qty: Decimal::TEN,
-            },
-            OrderBookEntity {
-                price: Decimal::from(200),
-                qty: Decimal::TWO,
-            },
-        ];
-
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_sort_and_filter() {
-        let entity = OrderBook::bids();
-
-        let result = sort_and_filter(entity);
-        let expected = vec![
-            OrderBookEntity {
-                price: Decimal::from(85),
-                qty: Decimal::ONE_HUNDRED,
-            },
-            OrderBookEntity {
-                price: Decimal::from(90),
-                qty: Decimal::TEN,
-            },
-            OrderBookEntity {
-                price: Decimal::from(80),
-                qty: Decimal::TWO,
-            },
-            OrderBookEntity {
-                price: Decimal::from(75),
-                qty: Decimal::ONE,
-            },
-        ];
-
-        assert_eq!(result, expected);
     }
 }

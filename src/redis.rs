@@ -1,8 +1,8 @@
 use log::error;
 use redis::{AsyncCommands, Client};
 
-use crate::binance::OrderBook;
 use crate::error::{Result, ServiceError};
+use crate::order_book::OrderBook;
 
 const ORDER_BOOK_TTL: u64 = 60;
 

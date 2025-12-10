@@ -1,8 +1,9 @@
 use reqwest::Client;
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::error::{Result, ServiceError};
+use crate::order_book::{OrderBook, OrderBookEntity};
 
 const EXCHANGE_INFO_URL: &str = "https://api.binance.com/api/v3/exchangeInfo";
 const ORDER_BOOK_URL: &str = "https://api.binance.com/api/v3/depth";
@@ -69,18 +70,6 @@ pub struct BinancePriceResponse {
 struct BinanceOrderBookResponse {
     bids: Vec<(Decimal, Decimal)>, // (price, qty)
     asks: Vec<(Decimal, Decimal)>, // (price, qty)
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OrderBookEntity {
-    pub price: Decimal,
-    pub qty: Decimal,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct OrderBook {
-    pub asks: Vec<OrderBookEntity>,
-    pub bids: Vec<OrderBookEntity>,
 }
 
 impl From<BinanceOrderBookResponse> for OrderBook {

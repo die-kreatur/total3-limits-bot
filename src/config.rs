@@ -1,4 +1,5 @@
 use std::fs;
+use std::collections::HashSet;
 
 use serde::Deserialize;
 use teloxide::types::ChatId;
@@ -11,7 +12,7 @@ const CONFIG_PATH: &str = "./configs/config.json";
 pub struct ServiceConfig {
     pub redis_url: String,
     pub telegram_token: String,
-    pub allowed_users: Vec<ChatId>
+    pub allowed_users: HashSet<ChatId>
 }
 
 impl ServiceConfig {

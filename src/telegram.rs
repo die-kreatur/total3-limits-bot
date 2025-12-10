@@ -2,23 +2,19 @@ use numfmt::Formatter;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 
-use crate::binance::OrderBookEntity;
-use crate::state::ExtendedOrderBook;
+use crate::order_book::{OrderBookEntity, ExtendedOrderBook};
 
 const MARKDOVWN2_ESCAPE_SYMBOLS: &str = r#"\\[]()~>#\+-={}.!""#;
 const MARKDOVWN2_SYMBOLS: &str = r#"*_"#;
 
 fn escape_markdown_v2(text: String) -> String {
-    let mut escaped = String::with_capacity(text.len());
-
-    for c in text.chars() {
-        if MARKDOVWN2_ESCAPE_SYMBOLS.contains(c) && !MARKDOVWN2_SYMBOLS.contains(c) {
-            escaped.push('\\');
+    text.chars().fold(String::with_capacity(text.len()), |mut acc, char| {
+        if MARKDOVWN2_ESCAPE_SYMBOLS.contains(char) && !MARKDOVWN2_SYMBOLS.contains(char) {
+            acc.push('\\');
         }
-        escaped.push(c);
-    }
-
-    escaped
+        acc.push(char);
+        acc
+    })
 }
 
 fn format_num(f: &mut Formatter, num: Decimal) -> String {
