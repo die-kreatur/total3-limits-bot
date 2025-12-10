@@ -3,7 +3,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use log::{error, info};
-use reqwest::Client;
 use rust_decimal::Decimal;
 use teloxide::types::ChatId;
 use tokio::sync::RwLock;
@@ -28,7 +27,7 @@ impl AppState {
         let redis = Redis::new(redis_config).expect("Failed to connect to Redis");
 
         AppState {
-            binance: Binance::new(Client::new()),
+            binance: Binance::new(),
             trading_pairs: RwLock::new(HashSet::new()),
             redis,
             allowed_users,

@@ -15,6 +15,58 @@ pub struct OrderBook {
     pub bids: Vec<OrderBookEntity>,
 }
 
+#[cfg(test)]
+impl OrderBook {
+    pub fn asks() -> Vec<OrderBookEntity> {
+        vec![
+            OrderBookEntity {
+                price: Decimal::ONE_HUNDRED,
+                qty: Decimal::ONE,
+            },
+            OrderBookEntity {
+                price: Decimal::from(150),
+                qty: Decimal::TEN,
+            },
+            OrderBookEntity {
+                price: Decimal::from(200),
+                qty: Decimal::TWO,
+            },
+            OrderBookEntity {
+                price: Decimal::from(250),
+                qty: Decimal::ONE,
+            },
+        ]
+    }
+
+    pub fn bids() -> Vec<OrderBookEntity> {
+        vec![
+            OrderBookEntity {
+                price: Decimal::from(90),
+                qty: Decimal::TEN,
+            },
+            OrderBookEntity {
+                price: Decimal::from(85),
+                qty: Decimal::ONE_HUNDRED,
+            },
+            OrderBookEntity {
+                price: Decimal::from(80),
+                qty: Decimal::TWO,
+            },
+            OrderBookEntity {
+                price: Decimal::from(75),
+                qty: Decimal::ONE,
+            },
+        ]
+    }
+
+    pub fn default() -> OrderBook {
+        OrderBook {
+            asks: OrderBook::asks(),
+            bids: OrderBook::bids(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum OrderType {
     Ask,
